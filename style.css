@@ -1,0 +1,56 @@
+:root{--bg:#f7f8fa;--card:#fff;--ink:#16181d;--muted:#5b6270;--line:#e3e6ec;--brand:#0b6e4f;--brand-ink:#fff;--accent:#e8f4ef;--warn:#fff4e0;--warn-ink:#8a5200;--radius:14px}
+@media (prefers-color-scheme:dark){:root{--bg:#111316;--card:#1a1d22;--ink:#e9ecf1;--muted:#a2a9b6;--line:#2c3139;--brand:#3fbf8f;--brand-ink:#08130e;--accent:#16291f;--warn:#2b2211;--warn-ink:#f0c27a}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;word-break:keep-all}
+a{color:var(--brand)}
+.wrap{max-width:860px;margin:0 auto;padding:0 16px}
+header.site{background:var(--card);border-bottom:1px solid var(--line)}
+header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;flex-wrap:wrap}
+.logo{font-weight:800;font-size:1.1rem;text-decoration:none;color:var(--ink)}
+.logo span{color:var(--brand)}
+nav.top a{margin-left:14px;font-size:.92rem;text-decoration:none;color:var(--muted)}
+nav.top a:first-child{margin-left:0}
+.crumbs{font-size:.85rem;color:var(--muted);margin:16px 0 4px}
+.crumbs a{color:var(--muted)}
+h1{font-size:1.6rem;line-height:1.35;margin:.3em 0 .4em}
+h2{font-size:1.25rem;margin:2em 0 .6em}
+h3{font-size:1.05rem;margin:1.4em 0 .4em}
+.lead{font-size:1.02rem;color:var(--muted);margin:0 0 18px}
+.updated{font-size:.82rem;color:var(--muted)}
+.tool{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;margin:16px 0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:620px){.grid{grid-template-columns:1fr}}
+label{display:block;font-size:.9rem;font-weight:600;margin-bottom:4px}
+.hint{display:block;font-weight:400;color:var(--muted);font-size:.8rem}
+input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--brand);outline-offset:1px}
+.unit{position:relative}
+.unit input{padding-right:48px}
+.unit::after{content:attr(data-unit);position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:.85rem;pointer-events:none}
+button.go{margin-top:16px;width:100%;padding:13px;border:0;border-radius:10px;background:var(--brand);color:var(--brand-ink);font:inherit;font-weight:700;cursor:pointer}
+.result{margin-top:18px;border-radius:12px;background:var(--accent);padding:16px;display:none}
+.result.on{display:block}
+.big{font-size:1.7rem;font-weight:800;line-height:1.2}
+.rows{margin:10px 0 0;padding:0;list-style:none}
+.rows li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-top:1px dashed var(--line);font-size:.95rem}
+.rows li b{font-variant-numeric:tabular-nums;text-align:right}
+.note{background:var(--warn);color:var(--warn-ink);border-radius:10px;padding:10px 12px;font-size:.88rem;margin-top:12px}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;font-size:.92rem;background:var(--card)}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+thead th{background:var(--accent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin:14px 0}
+.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;text-decoration:none;color:var(--ink)}
+.card b{display:block;margin-bottom:4px}
+.card span{color:var(--muted);font-size:.88rem}
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
+summary{font-weight:700;cursor:pointer}
+.sources{font-size:.85rem;color:var(--muted)}
+.ad-slot{min-height:280px;margin:22px 0;display:flex;align-items:center;justify-content:center}
+.ad-slot:empty{display:none}
+footer.site{margin-top:48px;border-top:1px solid var(--line);background:var(--card);font-size:.85rem;color:var(--muted)}
+footer.site .wrap{padding-top:20px;padding-bottom:28px}
+footer.site a{color:var(--muted);margin-right:12px}
+.disclaimer{margin-top:10px}
