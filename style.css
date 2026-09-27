@@ -48,7 +48,9 @@ thead th{background:var(--accent)}
 details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:8px 0}
 summary{font-weight:700;cursor:pointer}
 .sources{font-size:.85rem;color:var(--muted)}
-.ad-slot{min-height:280px;margin:22px 0;display:flex;align-items:center;justify-content:center}
+.ad-slot{margin:22px 0;display:flex;align-items:center;justify-content:center}
+.ad-slot:has(ins[data-ad-status="filled"]){min-height:280px}
+.ad-slot:has(ins[data-ad-status="unfilled"]){display:none}
 .ad-slot:empty{display:none}
 footer.site{margin-top:48px;border-top:1px solid var(--line);background:var(--card);font-size:.85rem;color:var(--muted)}
 footer.site .wrap{padding-top:20px;padding-bottom:28px}
