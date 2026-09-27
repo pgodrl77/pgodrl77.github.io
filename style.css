@@ -56,3 +56,16 @@ footer.site{margin-top:48px;border-top:1px solid var(--line);background:var(--ca
 footer.site .wrap{padding-top:20px;padding-bottom:28px}
 footer.site a{color:var(--muted);margin-right:12px}
 .disclaimer{margin-top:10px}
+.share{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.share button{font:inherit;font-size:.85rem;padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--ink);cursor:pointer}
+.share button:hover{border-color:var(--brand);color:var(--brand)}
+svg.chart{width:100%;height:auto;margin-top:14px;background:var(--card);border-radius:10px}
+.legend{display:flex;gap:14px;font-size:.82rem;color:var(--muted);margin:6px 0 10px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:0}
+table.yr{margin-top:6px}
+.blog{margin:8px 0;padding-left:20px}
+.blog li{margin:6px 0}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin:12px 0}
+.toc{font-size:.9rem;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:14px 0}
+.toc a{margin-right:12px;white-space:nowrap}
+@media print{header.site,footer.site,.ad-slot,.share,button.go,.cards,nav{display:none!important}.result{display:block;background:#fff}}

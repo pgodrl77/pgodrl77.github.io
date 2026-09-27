@@ -167,9 +167,106 @@
     show(box, "양도소득세 " + won(tax), rows, note + " 신고·납부 기한은 다음 해 5월입니다.");
   };
 
+  /* 보유 주식 기준: 주식 수 × 주당 배당금 × 지급 횟수 (원화·달러) */
+  C.holding = function (box) {
+    var n = num("h-shares"), dps = num("h-dps"), cur = val("h-cur"), fx = num("h-fx") || 1, basis = val("h-basis"), freq = parseFloat(val("h-freq")) || 4;
+    var rate = parseFloat(val("h-tax"));
+    var k = cur === "usd" ? fx : 1;
+    var annualDps = basis === "per" ? dps * freq : dps;
+    var gross = n * annualDps * k, tax = gross * rate, net = gross - tax;
+    var rows = [["연간 주당 배당금", (cur === "usd" ? "$" + annualDps.toFixed(4) + " (" + won(annualDps * k) + ")" : won(annualDps))],
+      ["세전 연 배당금", won(gross)], ["세금 (" + pct(rate, 1) + ")", won(tax)],
+      ["1회 지급 세후 (연 " + freq + "회)", won(net / freq)], ["세후 월평균", won(net / 12)]];
+    var price = num("h-price");
+    if (price > 0) rows.push(["세전 배당수익률", pct(annualDps / price, 2)]);
+    var note = cur === "usd" ? "달러 배당은 지급일 환율로 원화 환산되어 과세됩니다. 환율이 10% 오르면 원화 배당도 10% 늘어납니다." : "";
+    if (gross > 20e6 && rate > 0) note += " 연 배당이 2,000만원을 넘어 금융소득종합과세 대상입니다. <a href=\"/financial-income-tax\">추가 세금 계산 →</a>";
+    show(box, "세후 연 " + won(net), rows, note);
+  };
+
+  /* 배당 재투자(DRIP) 시뮬레이션 — 월 단위 복리 */
+  C.drip = function (box) {
+    var P0 = num("r-init") * W, add = num("r-add") * W, y = num("r-yield") / 100, dg = num("r-dg") / 100, pg = num("r-pg") / 100;
+    var years = Math.min(60, Math.max(1, Math.round(num("r-years")))), rate = parseFloat(val("r-tax")), reinvest = val("r-re") === "1";
+    var price = 1, units = P0, principal = P0, cash = 0, cumDiv = 0, rows = [], yld = y;
+    var mg = Math.pow(1 + pg, 1 / 12) - 1;
+    for (var yr = 1; yr <= years; yr++) {
+      var yDiv = 0;
+      for (var m = 0; m < 12; m++) {
+        price *= 1 + mg;
+        units += add / price; principal += add;
+        var d = units * price * yld / 12 * (1 - rate);
+        yDiv += d; cumDiv += d;
+        if (reinvest) units += d / price; else cash += d;
+      }
+      yld = yld * (1 + dg) / (1 + pg);
+      rows.push([yr, principal, units * price + cash, yDiv]);
+    }
+    var last = rows[rows.length - 1], endVal = last[2], nextMonthly = units * price * yld / 12 * (1 - rate);
+    var tbl = '<div class="tablewrap"><table class="yr"><thead><tr><th>연차</th><th>누적 원금</th><th>평가액</th><th>그해 세후 배당</th><th>월평균</th></tr></thead><tbody>';
+    rows.forEach(function (r) { if (years <= 15 || r[0] % 5 === 0 || r[0] === 1) tbl += "<tr><td>" + r[0] + "년</td><td>" + won(r[1]) + "</td><td>" + won(r[2]) + "</td><td>" + won(r[3]) + "</td><td>" + won(r[3] / 12) + "</td></tr>"; });
+    tbl += "</tbody></table></div>";
+    var maxV = Math.max.apply(null, rows.map(function (r) { return r[2]; })) || 1, Wd = 600, H = 220, bw = Wd / rows.length;
+    var svg = '<svg class="chart" viewBox="0 0 ' + Wd + " " + (H + 24) + '" role="img" aria-label="연도별 원금과 평가액">';
+    rows.forEach(function (r, i) {
+      var h1 = r[1] / maxV * H, h2 = r[2] / maxV * H, x = i * bw + bw * 0.15, w = bw * 0.7;
+      svg += '<rect x="' + x + '" y="' + (H - h2) + '" width="' + w + '" height="' + h2 + '" fill="#0b6e4f" opacity=".85"><title>' + r[0] + "년 평가액 " + won(r[2]) + "</title></rect>";
+      svg += '<rect x="' + x + '" y="' + (H - h1) + '" width="' + w + '" height="' + h1 + '" fill="#f5c542"><title>' + r[0] + "년 누적 원금 " + won(r[1]) + "</title></rect>";
+      if (rows.length <= 15 || r[0] % 5 === 0) svg += '<text x="' + (x + w / 2) + '" y="' + (H + 16) + '" text-anchor="middle" font-size="11" fill="#5b6475">' + r[0] + "</text>";
+    });
+    svg += "</svg><div class=\"legend\"><span><i style=\"background:#f5c542\"></i>누적 원금</span><span><i style=\"background:#0b6e4f\"></i>평가액</span></div>";
+    show(box, years + "년 뒤 " + won(endVal), [
+      ["넣은 원금 합계", won(last[1])], ["평가액", won(endVal)], ["수익 (평가액 − 원금)", won(endVal - last[1])],
+      ["누적 세후 배당", won(cumDiv)], [years + "년차 세후 월 배당", won(last[3] / 12)], ["다음 해 예상 세후 월 배당", won(nextMonthly)]
+    ], (reinvest ? "세후 배당을 매달 같은 종목에 다시 사는 것으로 가정했습니다. " : "배당을 재투자하지 않고 현금으로 쌓는 것으로 가정했습니다. ") + "배당수익률·성장률·주가상승률이 매년 일정하다는 단순 가정이며 미래 수익을 보장하지 않습니다.");
+    box.insertAdjacentHTML("beforeend", svg + tbl);
+  };
+
+  /* 홈 빠른 계산: 같은 배당을 계좌별로 받으면 */
+  C.quick = function (box) {
+    var g = num("q-amount") * W;
+    var isa = Math.max(0, g - 2e6) * 0.099;
+    show(box, "일반계좌 세후 " + won(g * 0.846), [
+      ["국내주식·국내상장 ETF (15.4%)", won(g * 0.846)], ["미국주식 직투 (15%)", won(g * 0.85)],
+      ["ISA 일반형 (200만원 비과세, 초과 9.9%)", won(g - isa)], ["연금저축·IRP (인출 전 과세이연)", won(g)],
+      ["일반계좌 대비 ISA 절세액", won(g * 0.154 - isa)]
+    ], g > 20e6 ? "연 2,000만원을 넘으면 금융소득종합과세 대상입니다. <a href=\"/financial-income-tax\">추가 세금 계산 →</a>" : "");
+  };
+
+  /* 결과 복사·조건 공유 링크 */
+  function tools(f, box) {
+    if (f.querySelector(".share")) return;
+    var bar = document.createElement("div"); bar.className = "share";
+    bar.innerHTML = '<button type="button" data-a="copy">결과 복사</button><button type="button" data-a="link">조건 링크 복사</button><button type="button" data-a="print">인쇄</button>';
+    f.appendChild(bar);
+    bar.addEventListener("click", function (e) {
+      var a = e.target.getAttribute("data-a"); if (!a) return;
+      if (a === "print") { window.print(); return; }
+      var text;
+      if (a === "copy") {
+        text = document.title.split("|")[0].trim() + "\n" + [].map.call(box.querySelectorAll(".big, .rows li"), function (li) { return li.innerText.replace(/\n/g, " : "); }).join("\n") + "\n" + location.origin + location.pathname;
+      } else {
+        var q = [].map.call(f.querySelectorAll("input,select"), function (el) { return el.id ? encodeURIComponent(el.id) + "=" + encodeURIComponent(el.value) : ""; }).filter(Boolean).join("&");
+        text = location.origin + location.pathname + "?" + q;
+      }
+      var done = function () { e.target.textContent = "복사했습니다"; setTimeout(function () { e.target.textContent = a === "copy" ? "결과 복사" : "조건 링크 복사"; }, 1500); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () { prompt("복사하세요", text); });
+      else prompt("복사하세요", text);
+    });
+  }
+  function prefill() {
+    if (!location.search) return;
+    location.search.slice(1).split("&").forEach(function (kv) {
+      var p = kv.split("="), el = document.getElementById(decodeURIComponent(p[0] || ""));
+      if (el && p.length > 1) el.value = decodeURIComponent(p[1]);
+    });
+  }
+
   function bind() {
+    prefill();
     document.querySelectorAll("form[data-calc]").forEach(function (f) {
       var box = f.querySelector(".result");
+      tools(f, box);
       var run = function () { try { C[f.getAttribute("data-calc")](box); } catch (e) { console.error(e); } };
       f.addEventListener("submit", function (e) { e.preventDefault(); run(); });
       f.addEventListener("change", run); f.addEventListener("input", run);
