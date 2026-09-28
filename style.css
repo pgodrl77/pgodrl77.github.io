@@ -69,3 +69,45 @@ table.yr{margin-top:6px}
 .toc{font-size:.9rem;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:14px 0}
 .toc a{margin-right:12px;white-space:nowrap}
 @media print{header.site,footer.site,.ad-slot,.share,button.go,.cards,nav{display:none!important}.result{display:block;background:#fff}}
+
+/* ── 2026-09-28 디자인 다듬기: 글꼴·위계·움직임·모바일 ── */
+body{font-family:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",sans-serif;letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+h1{font-size:1.85rem;font-weight:800;letter-spacing:-.03em}
+h2{letter-spacing:-.02em;font-weight:750}
+.lead{max-width:68ch}
+header.site{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--card) 88%,transparent);backdrop-filter:saturate(1.4) blur(8px);-webkit-backdrop-filter:saturate(1.4) blur(8px)}
+nav.top a{padding:4px 2px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+nav.top a:hover{color:var(--brand);border-bottom-color:var(--brand)}
+.trust{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:-4px 0 8px}
+.trust li{font-size:.82rem;font-weight:600;color:var(--brand);background:var(--accent);border-radius:999px;padding:4px 11px}
+.trust li::before{content:"✓ "}
+.tool{box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -12px rgba(16,24,40,.10)}
+button.go{transition:transform .08s,filter .15s}
+button.go:hover{filter:brightness(1.08)}
+button.go:active{transform:scale(.985)}
+.big{letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.result.pop{animation:pop .35s ease-out}
+@keyframes pop{from{opacity:.35;transform:translateY(6px)}to{opacity:1;transform:none}}
+.card{position:relative;transition:border-color .15s,transform .15s,box-shadow .15s;padding-right:36px}
+.card::after{content:"→";position:absolute;right:16px;top:16px;color:var(--muted);transition:transform .15s,color .15s}
+.card:hover{border-color:var(--brand);transform:translateY(-2px);box-shadow:0 10px 24px -14px rgba(11,110,79,.45)}
+.card:hover::after{color:var(--brand);transform:translateX(3px)}
+.rows li>span{flex:0 0 auto;max-width:46%}
+.rows li>b{min-width:0}
+details{transition:border-color .15s}
+details[open]{border-color:var(--brand)}
+@media (max-width:620px){
+  h1{font-size:1.5rem}
+  .lead{font-size:.95rem}
+  .tool{padding:16px;margin-left:-4px;margin-right:-4px}
+  .big{font-size:1.5rem}
+  .rows li{font-size:.9rem}
+  header.site .wrap{min-height:50px;gap:6px 12px;padding-top:6px;padding-bottom:6px}
+  nav.top{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;width:100%}
+  nav.top::-webkit-scrollbar{display:none}
+  nav.top a{margin-left:0;white-space:nowrap}
+  .cards{grid-template-columns:1fr;gap:8px}
+  .card{padding:13px 36px 13px 14px}
+  footer.site a{display:inline-block;margin:0 12px 6px 0}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}

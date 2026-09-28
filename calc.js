@@ -268,7 +268,12 @@
       var box = f.querySelector(".result");
       tools(f, box);
       var run = function () { try { C[f.getAttribute("data-calc")](box); } catch (e) { console.error(e); } };
-      f.addEventListener("submit", function (e) { e.preventDefault(); run(); });
+      f.addEventListener("submit", function (e) {
+        e.preventDefault(); run();
+        box.classList.remove("pop"); void box.offsetWidth; box.classList.add("pop");
+        var r = box.getBoundingClientRect();
+        if (r.top > window.innerHeight - 120 || r.top < 0) box.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
       f.addEventListener("change", run); f.addEventListener("input", run);
       if (f.hasAttribute("data-autorun")) run();
     });
