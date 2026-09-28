@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
 Sitemap: https://sehucalc.com/sitemap.xml
+Sitemap: https://sehucalc.com/pick/sitemap.xml
