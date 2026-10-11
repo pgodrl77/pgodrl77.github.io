@@ -210,11 +210,11 @@
     var svg = '<svg class="chart" viewBox="0 0 ' + Wd + " " + (H + 24) + '" role="img" aria-label="연도별 원금과 평가액">';
     rows.forEach(function (r, i) {
       var h1 = r[1] / maxV * H, h2 = r[2] / maxV * H, x = i * bw + bw * 0.15, w = bw * 0.7;
-      svg += '<rect x="' + x + '" y="' + (H - h2) + '" width="' + w + '" height="' + h2 + '" fill="#0b6e4f" opacity=".85"><title>' + r[0] + "년 평가액 " + won(r[2]) + "</title></rect>";
-      svg += '<rect x="' + x + '" y="' + (H - h1) + '" width="' + w + '" height="' + h1 + '" fill="#f5c542"><title>' + r[0] + "년 누적 원금 " + won(r[1]) + "</title></rect>";
+      svg += '<rect x="' + x + '" y="' + (H - h2) + '" width="' + w + '" height="' + h2 + '" fill="#1B64DA" opacity=".85"><title>' + r[0] + "년 평가액 " + won(r[2]) + "</title></rect>";
+      svg += '<rect x="' + x + '" y="' + (H - h1) + '" width="' + w + '" height="' + h1 + '" fill="#9EC1F5"><title>' + r[0] + "년 누적 원금 " + won(r[1]) + "</title></rect>";
       if (rows.length <= 15 || r[0] % 5 === 0) svg += '<text x="' + (x + w / 2) + '" y="' + (H + 16) + '" text-anchor="middle" font-size="11" fill="#5b6475">' + r[0] + "</text>";
     });
-    svg += "</svg><div class=\"legend\"><span><i style=\"background:#f5c542\"></i>누적 원금</span><span><i style=\"background:#0b6e4f\"></i>평가액</span></div>";
+    svg += "</svg><div class=\"legend\"><span><i style=\"background:#9EC1F5\"></i>누적 원금</span><span><i style=\"background:#1B64DA\"></i>평가액</span></div>";
     show(box, years + "년 뒤 " + won(endVal), [
       ["넣은 원금 합계", won(last[1])], ["평가액", won(endVal)], ["수익 (평가액 − 원금)", won(endVal - last[1])],
       ["누적 세후 배당", won(cumDiv)], [years + "년차 세후 월 배당", won(last[3] / 12)], ["다음 해 예상 세후 월 배당", won(nextMonthly)]
