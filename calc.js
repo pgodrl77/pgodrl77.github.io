@@ -167,6 +167,30 @@
     show(box, "양도소득세 " + won(tax), rows, note + " 신고·납부 기한은 다음 해 5월입니다.");
   };
 
+  /* 국내 상장주식 매매: 증권거래세(2026: 코스피·코스닥 0.20%, 코넥스 0.10%) + 수수료 + 대주주 양도세 */
+  C.domestic = function (box) {
+    var b = num("d-buy") * W, s = num("d-sell") * W, r = parseFloat(val("d-mkt")) || 0.002,
+      f = (num("d-fee") || 0) / 100, major = val("d-major");
+    var fee = (b + s) * f, stt = s * r, gain = s - b, tax = 0, base = 0;
+    if (major !== "no") {
+      base = Math.max(0, gain - fee - stt - 2.5e6);
+      tax = major === "y33" ? base * 0.33 : (base <= 3e8 ? base * 0.22 : 3e8 * 0.22 + (base - 3e8) * 0.275);
+    }
+    var net = gain - fee - stt - tax, ret = b > 0 ? net / b : 0;
+    var be = (1 - f - r) > 0 ? (1 + f) / (1 - f - r) - 1 : 0;
+    var mk = r >= 0.002 ? "코스피·코스닥 0.20%" : "코넥스 0.10%";
+    var rows = [["매매차익 (매도 − 매수)", won(gain)], ["증권거래세 (" + mk + ", 매도금액 기준)", won(stt)],
+      ["증권사 수수료 (매수+매도)", won(fee)]];
+    if (major !== "no") rows.push(["양도소득세 과세표준 (250만원 공제 후)", won(base)], ["양도소득세 (지방세 포함)", won(tax)]);
+    else rows.push(["양도소득세", "0원 (소액주주 비과세)"]);
+    rows.push(["세후 수익률", pct(ret, 2)], ["본전이 되는 주가 상승률", pct(be, 3)]);
+    var note = major === "no"
+      ? "소액주주는 국내 상장주식 매매차익에 양도세가 없고, 증권거래세와 수수료만 냅니다. 종목당 보유액 50억원 이상이거나 지분율 코스피 1%·코스닥 2%·코넥스 4% 이상이면 대주주로 양도세 대상입니다."
+      : "대주주 양도세는 반기 다음 달 말까지 예정신고하고, 다음 해 5월에 확정신고합니다. 같은 해 다른 국내주식 손실과 통산할 수 있습니다.";
+    if (gain < 0) note = "손실이 나도 증권거래세는 매도금액 기준으로 냅니다. " + note;
+    show(box, (net >= 0 ? "세후 순이익 " : "세후 순손실 ") + won(Math.abs(net)), rows, note);
+  };
+
   /* 보유 주식 기준: 주식 수 × 주당 배당금 × 지급 횟수 (원화·달러) */
   C.holding = function (box) {
     var n = num("h-shares"), dps = num("h-dps"), cur = val("h-cur"), fx = num("h-fx") || 1, basis = val("h-basis"), freq = parseFloat(val("h-freq")) || 4;
