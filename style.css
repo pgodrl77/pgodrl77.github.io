@@ -113,3 +113,15 @@ footer.site a{color:var(--muted2);margin-right:16px}
   footer.site a{display:inline-block;margin:0 14px 6px 0}
 }
 @media print{header.site,footer.site,.bar,.ad-slot,.share,button.go,.cards,nav{display:none!important}.result{display:block;background:#fff}}
+
+/* 픽툴 홍보 박스 (2026-10-13) */
+.promo{display:flex;align-items:center;gap:16px;margin:14px 0;padding:20px;background:linear-gradient(135deg,#fff4e0,#ffe6c7);border:1px solid #ffd79a;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.04);color:#1a1a1a;text-decoration:none}
+.promo:hover{text-decoration:none;border-color:#ff8a00;box-shadow:0 4px 14px rgba(255,138,0,.18)}
+.promo-ico{font-size:32px;line-height:1;flex-shrink:0}
+.promo-txt{flex:1;min-width:0}
+.promo-txt b{display:block;font-size:17px;font-weight:700;color:#1a1a1a;margin-bottom:4px}
+.promo-txt>span{display:block;font-size:14px;color:#555}
+.promo-btn{flex-shrink:0;background:#ff8a00;color:#fff;font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;white-space:nowrap}
+.promo:hover .promo-btn{background:#f07a00}
+@media (max-width:640px){.promo{flex-wrap:wrap;padding:16px;gap:12px}.promo-ico{font-size:28px}.promo-txt b{font-size:16px}.promo-btn{width:100%;text-align:center}}
+@media print{.promo{display:none!important}}
