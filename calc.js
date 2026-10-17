@@ -246,6 +246,147 @@
     box.insertAdjacentHTML("beforeend", svg + tbl);
   };
 
+  /* ═══ 2026-10 신규: 연봉 실수령액·적금·예금 이자 (요율은 calc_kr.py 와 같아야 함) ═══ */
+  var R26 = { pension: 0.095, pMin: 410000, pMax: 6590000, health: 0.0719, ltc: 0.009448, ltcOfHealth: 0.1314, employ: 0.009, hMax: 4591740, hMin: 10080 };
+  function f10(x) { return Math.floor(x / 10 + 1e-9) * 10; }
+  var WT = null, wtWait = [];
+  function loadWT(cb) {
+    if (WT) { cb(); return; }
+    wtWait.push(cb);
+    if (wtWait.length > 1) return;
+    var s = document.querySelector('script[src*="calc.js"]');
+    var url = s ? s.src.replace(/calc\.js.*$/, "wtax2026.json") : "/assets/wtax2026.json";
+    fetch(url).then(function (r) { return r.json(); }).then(function (j) { WT = j; wtWait.forEach(function (f) { f(); }); wtWait = []; })
+      .catch(function (e) { console.error(e); });
+  }
+  function kidCredit(k) { return k <= 0 ? 0 : k === 1 ? 20830 : 45830 + Math.max(0, k - 2) * 33330; }
+  /* 근로소득 간이세액표(소득세법 시행령 별표2, 2026.3.1 이후 원천징수분) */
+  function withholding(taxable, fam, kids) {
+    var n = Math.min(Math.max(Math.floor(fam), 1), 11), k = taxable / 1000, rows = WT.rows, t;
+    if (k < rows[0][0]) t = 0;
+    else if (k < WT.end) {
+      var lo = 0, hi = rows.length - 1;
+      while (lo < hi) { var mid = (lo + hi + 1) >> 1; if (rows[mid][0] <= k) lo = mid; else hi = mid - 1; }
+      t = rows[lo][n];
+    } else {
+      var b = WT.r10000[n - 1], X = taxable;
+      if (X <= 10e6) t = b;
+      else if (X <= 14e6) t = b + (X - 10e6) * 0.98 * 0.35 + 25000;
+      else if (X <= 28e6) t = b + 1397000 + (X - 14e6) * 0.98 * 0.38;
+      else if (X <= 30e6) t = b + 6610600 + (X - 28e6) * 0.98 * 0.40;
+      else if (X <= 45e6) t = b + 7394600 + (X - 30e6) * 0.40;
+      else if (X <= 87e6) t = b + 13394600 + (X - 45e6) * 0.42;
+      else t = b + 31034600 + (X - 87e6) * 0.45;
+      t = f10(t);
+    }
+    return Math.max(0, t - kidCredit(kids));
+  }
+  function salaryCalc(gross, nontax, fam, kids, ratio) {
+    var taxable = Math.max(0, gross - Math.min(nontax, gross));
+    var base = Math.min(Math.max(Math.floor(taxable / 1000) * 1000, R26.pMin), R26.pMax);
+    var pension = f10(f10(base * R26.pension) / 2);
+    var hTotal = f10(taxable * R26.health);
+    var health = Math.min(Math.max(f10(hTotal / 2), R26.hMin), R26.hMax);
+    var ltc = f10(f10(hTotal * R26.ltcOfHealth) / 2);
+    var employ = f10(taxable * R26.employ);
+    kids = Math.min(kids, Math.max(0, fam - 1));
+    var itax = f10(withholding(taxable, fam, kids) * (ratio || 1)), ltax = f10(itax * 0.1);
+    var ded = pension + health + ltc + employ + itax + ltax;
+    return { gross: gross, taxable: taxable, base: base, pension: pension, health: health, ltc: ltc, employ: employ, itax: itax, ltax: ltax, ded: ded, net: gross - ded };
+  }
+
+  C.salary = function (box) {
+    if (!WT) { box.innerHTML = '<div class="big">세액표 불러오는 중…</div>'; box.classList.add("on"); loadWT(function () { C.salary(box); }); return; }
+    var mode = val("s-mode"), amt = num("s-amount") * W, sev = val("s-sev") === "in";
+    var gross = mode === "month" ? amt : amt / (sev ? 13 : 12);
+    var fam = Math.max(1, Math.round(num("s-fam"))), kids = Math.max(0, Math.round(num("s-kids")));
+    var ratio = parseFloat(val("s-ratio")) || 1;
+    var r = salaryCalc(gross, num("s-nontax") * W, fam, kids, ratio);
+    var rows = [
+      ["월 급여 (세전)" + (mode === "year" && sev ? " — 연봉 ÷ 13" : ""), won(r.gross)],
+      ["비과세 (식대 등)", won(r.gross - r.taxable)],
+      ["국민연금 4.75%" + (r.base === R26.pMax ? " (상한 659만원 적용)" : r.base === R26.pMin ? " (하한 41만원 적용)" : ""), "−" + won(r.pension)],
+      ["건강보험 3.595%", "−" + won(r.health)],
+      ["장기요양 (건강보험료의 13.14%)", "−" + won(r.ltc)],
+      ["고용보험 0.9%", "−" + won(r.employ)],
+      ["소득세 (간이세액표" + (ratio !== 1 ? " " + Math.round(ratio * 100) + "%" : "") + (kids ? ", 자녀 " + Math.min(kids, fam - 1) + "명 공제" : "") + ")", "−" + won(r.itax)],
+      ["지방소득세 (소득세의 10%)", "−" + won(r.ltax)],
+      ["공제 합계", "−" + won(r.ded)],
+      ["연 환산 실수령 (월 × 12)", won(r.net * 12)]
+    ];
+    var note = "4대보험은 2026년 요율(국민연금 기준소득월액 2026.7~ 기준), 소득세는 2026.3.1부터 쓰는 근로소득 간이세액표 기준입니다. 실제 세금은 연말정산에서 확정되어 환급·추가 납부가 생길 수 있습니다.";
+    if (kids > fam - 1) note = "8~20세 자녀 수는 공제대상가족(본인 포함) 수보다 작아야 해서 " + (fam - 1) + "명으로 계산했습니다. " + note;
+    if (mode === "year" && sev) note = "퇴직금 포함 연봉은 13으로 나눠 월급을 구했습니다(1/13은 퇴직금으로 적립). " + note;
+    show(box, "월 실수령액 " + won(r.net), rows, note);
+  };
+
+  /* 이자 과세: 일반 15.4% · 세금우대 9.5%(소득세 9%+농특세 0.5%) · 상호금융 1.4%(농특세) · 비과세 */
+  function intTax(I, kind) {
+    if (I <= 0 || kind === "free") return 0;
+    if (kind === "gen") { var inc = f10(I * 0.14); return inc + f10(inc * 0.1); }
+    if (kind === "pref") return f10(I * 0.09) + f10(I * 0.005);
+    if (kind === "mutual") return f10(I * 0.014);
+    return 0;
+  }
+  var TAXK = [["gen", "일반과세 15.4%"], ["pref", "세금우대 9.5%"], ["mutual", "상호금융 1.4%"], ["free", "비과세 0%"]];
+  function savI(P, n, r, m) { var i = r / 12; if (!i) return 0; return Math.round(m === "simple" ? P * i * n * (n + 1) / 2 : P * (1 + i) * (Math.pow(1 + i, n) - 1) / i - P * n); }
+  function depI(P, n, r, m) { return Math.round(m === "simple" ? P * r * n / 12 : m === "monthly" ? P * (Math.pow(1 + r / 12, n) - 1) : P * (Math.pow(1 + r, n / 12) - 1)); }
+  function compareTable(fnI, methods, cur) {
+    var h = '<div class="tablewrap"><table><thead><tr><th>과세 방식</th>';
+    methods.forEach(function (m) { h += "<th>" + m[1] + " 세후 이자</th>"; });
+    h += "</tr></thead><tbody>";
+    TAXK.forEach(function (k) {
+      h += "<tr><td>" + (k[0] === cur ? "<b>" + k[1] + "</b>" : k[1]) + "</td>";
+      methods.forEach(function (m) { var I = fnI(m[0]); h += "<td>" + won(I - intTax(I, k[0])) + "</td>"; });
+      h += "</tr>";
+    });
+    return h + "</tbody></table></div>";
+  }
+
+  C.savings = function (box) {
+    var P = num("sv-pay") * W, n = Math.max(1, Math.round(num("sv-months"))), r = num("sv-rate") / 100, m = val("sv-method"), k = val("sv-tax");
+    var I = savI(P, n, r, m), tax = intTax(I, k), prin = P * n;
+    var eff = prin ? I / prin / (n / 12) : 0, effNet = prin ? (I - tax) / prin / (n / 12) : 0;
+    show(box, "만기 세후 " + won(prin + I - tax), [
+      ["납입 원금 (" + won(P) + " × " + n + "개월)", won(prin)], ["세전 이자 (" + (m === "simple" ? "단리" : "월복리") + ")", won(I)],
+      ["이자 세금 (" + TAXK.filter(function (x) { return x[0] === k; })[0][1] + ")", "−" + won(tax)], ["세후 이자", won(I - tax)],
+      ["넣은 돈 대비 실제 연수익률 (세전 / 세후)", pct(eff, 2) + " / " + pct(effNet, 2)]
+    ], "적금은 첫 달 납입분만 " + n + "개월 동안 이자가 붙고 마지막 달 납입분은 1개월치만 붙습니다. 그래서 연 " + pct(r, 1) + " 적금의 실제 수익률은 약 " + pct(eff, 2) + "입니다. 매월 같은 날 납입, 중도해지 없음 기준입니다.");
+    box.insertAdjacentHTML("beforeend", "<h3>과세 방식 × 이자 계산 방식 비교</h3>" + compareTable(function (mm) { return savI(P, n, r, mm); }, [["simple", "단리"], ["compound", "월복리"]], k));
+  };
+
+  C.savingsGoal = function (box) {
+    var goal = num("sg-goal") * W, n = Math.max(1, Math.round(num("sg-months"))), r = num("sg-rate") / 100, m = val("sg-method"), k = val("sg-tax");
+    var keep = { gen: 0.846, pref: 0.905, mutual: 0.986, free: 1 }[k];
+    var P = Math.max(1000, Math.floor(goal / (n + savI(1e6, n, r, m) / 1e6 * keep) / 1000) * 1000);
+    var net = function (p) { var i = savI(p, n, r, m); return p * n + i - intTax(i, k); };
+    for (var g = 0; g < 1000 && net(P) < goal; g++) P += 1000;
+    var I = savI(P, n, r, m), tax = intTax(I, k);
+    show(box, "매월 " + won(P) + " 납입", [
+      ["목표 세후 만기액", won(goal)], ["납입 원금 합계", won(P * n)], ["세전 이자", won(I)], ["세금", "−" + won(tax)], ["예상 세후 만기액", won(P * n + I - tax)]
+    ], "목표액 이상이 되도록 1천원 단위로 올려 계산했습니다.");
+  };
+
+  C.deposit = function (box) {
+    var P = num("dp-amount") * W, n = Math.max(1, Math.round(num("dp-months"))), r = num("dp-rate") / 100, m = val("dp-method"), k = val("dp-tax");
+    var I = depI(P, n, r, m), tax = intTax(I, k), net = I - tax;
+    var mName = { simple: "단리", monthly: "월복리", annual: "연복리" }[m];
+    var rows = [
+      ["예치금", won(P)], ["세전 이자 (" + mName + ", " + n + "개월)", won(I)],
+      ["이자 세금 (" + TAXK.filter(function (x) { return x[0] === k; })[0][1] + ")", "−" + won(tax)], ["세후 이자", won(net)],
+      ["만기 수령액", won(P + net)], ["세후 연수익률", P ? pct(net / P / (n / 12), 2) : "—"], ["세후 이자 월 환산", won(net / n)]
+    ];
+    var I1 = depI(1e8, n, r, m) / 1e8, notes = [];
+    if (k === "gen" || k === "pref") {
+      if (I > 20e6) notes.push("세전 이자 " + won(I) + "이 2,000만원을 넘습니다. 이자를 받는 해의 다른 이자·배당과 합쳐 2,000만원 초과분은 <a href=\"/financial-income-tax\">금융소득종합과세</a> 대상입니다.");
+      else if (I1 > 0) rows.push(["이 조건에서 이자 2,000만원이 되는 예치금", won(20e6 / I1)]);
+    }
+    if (P + I > 1e8) notes.push("예금자보호는 한 금융회사당 원금과 이자를 합쳐 1억원까지입니다(2025.9.1~). 1억원을 넘는 부분은 다른 금융회사로 나누는 것이 안전합니다.");
+    notes.push("만기 일시지급, 중도해지 없음 기준입니다. 이자는 받는 날이 속한 해의 금융소득으로 잡힙니다.");
+    show(box, "세후 이자 " + won(net), rows, notes.join(" "));
+    box.insertAdjacentHTML("beforeend", "<h3>과세 방식 × 이자 계산 방식 비교</h3>" + compareTable(function (mm) { return depI(P, n, r, mm); }, [["simple", "단리"], ["monthly", "월복리"], ["annual", "연복리"]], k));
+  };
+
   /* 홈 빠른 계산: 같은 배당을 계좌별로 받으면 */
   C.quick = function (box) {
     var g = num("q-amount") * W;
@@ -311,5 +452,5 @@
     if (it) it.addEventListener("change", function () { document.getElementById("i-limit").value = it.value; });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind); else bind();
-  window.SehuCalc = { progTax: progTax, sepTax: sepTax, C: C };
+  window.SehuCalc = { progTax: progTax, sepTax: sepTax, C: C, salaryCalc: salaryCalc, withholding: withholding, intTax: intTax, savI: savI, depI: depI, setWT: function (j) { WT = j; } };
 })();
