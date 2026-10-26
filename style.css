@@ -125,3 +125,12 @@ footer.site a{color:var(--muted2);margin-right:16px}
 .promo:hover .promo-btn{background:#f07a00}
 @media (max-width:640px){.promo{flex-wrap:wrap;padding:16px;gap:12px}.promo-ico{font-size:28px}.promo-txt b{font-size:16px}.promo-btn{width:100%;text-align:center}}
 @media print{.promo{display:none!important}}
+
+/* 가이드 (2026-10-27) */
+.guide h2{margin-top:34px}
+.guide p,.guide li{line-height:1.75}
+.guide-cta{margin:26px 0;padding:18px 20px;background:#EEF4FF;border:1px solid #CFE0FF;border-radius:var(--radius)}
+.guide-cta p{margin:0}
+.guide-cta a.go{display:inline-block;margin-top:8px;padding:10px 16px;border-radius:8px;background:var(--brand);color:#fff;text-decoration:none;font-weight:600}
+.card .updated{display:block;margin-top:8px}
+
